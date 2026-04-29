@@ -1,38 +1,67 @@
 import { useState } from "react";
 
+// Sous-composant pour le bouton (pour simuler un design system)
+// Problème : on est obligé de lui passer "loading" en prop
+function SubmitButton({ loading }) {
+  return (
+      <button type="submit" disabled={loading}>
+        {loading ? "Calcul en cours..." : "S'inscrire à la newsletter"}
+      </button>
+  );
+}
+
 function App() {
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [isPending, setIsPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState({ loading: false, error: null, data: null });
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // La douleur n°1 de React 18
-    setIsPending(true);
+    e.preventDefault();
+    setStatus({ loading: true, error: null, data: null });
 
-    // Simulation d'appel API
-    await new Promise((res) => setTimeout(res, 1000));
+    try {
+      // Simulation API
+      await new Promise((res) => setTimeout(res, 1500));
 
-    setMessage(`Inscription réussie pour : ${email}`);
-    setIsPending(false);
-    setEmail("");
+      if (email.includes("error")) throw new Error("Email déjà utilisé !");
+
+      setStatus({
+        loading: false,
+        error: null,
+        data: `Bienvenue, ${firstName} ! Vérifiez vos emails.`
+      });
+      setFirstName("");
+      setEmail("");
+    } catch (err) {
+      setStatus({ loading: false, error: err.message, data: null });
+    }
   };
 
   return (
       <div className="container">
-        <h1>Newsletter (Legacy Mode)</h1>
+        <h1>Newsletter (Complex Legacy)</h1>
         <form onSubmit={handleSubmit}>
+          <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Prénom"
+              required
+          />
           <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Votre email"
+              placeholder="Email"
               required
           />
-          <button type="submit" disabled={isPending}>
-            {isPending ? "Chargement..." : "S'abonner"}
-          </button>
+
+          {/* On doit passer le state manuellement ici */}
+          <SubmitButton loading={status.loading} />
         </form>
-        {message && <p>{message}</p>}
+
+        {status.error && <p style={{ color: "red" }}>{status.error}</p>}
+        {status.data && <p style={{ color: "green" }}>{status.data}</p>}
       </div>
   );
 }
